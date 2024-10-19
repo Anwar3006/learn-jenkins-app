@@ -1,8 +1,8 @@
 pipeline {
     agent any
 
-    stages{
-        stage('Build'){
+    stages {
+        stage('Build') {
             agent {
                 docker {
                     image 'node:20-alpine'
@@ -10,7 +10,7 @@ pipeline {
                 }
             }
 
-            steps{
+            steps {
                 sh '''
                     ls -la
                     node --version
@@ -22,8 +22,8 @@ pipeline {
             }
         }
 
-        stage('Test'){
-            parallel (
+        stage('Test') {
+            parallel {
                 stage('Unit Tests') {
                     agent {
                         docker {
@@ -46,7 +46,6 @@ pipeline {
                     }
                 }
 
-
                 stage('E2E Tests') {
                     agent {
                         docker {
@@ -63,26 +62,25 @@ pipeline {
                             npx playwright test --reporter=html
                         '''
                     }
-                }
 
-                post {
-                    always {
-                        junit 'test-results/junit.xml'
-                        publishHTML(target: [
-                            reportDir: 'test-results',
-                            reportFiles: 'index.html',
-                            reportName: 'Playwright E2E Test Report',
-                            allowMissing: false,
-                            alwaysLinkToLastBuild: false,
-                            keepAll: false
-                        ])
+                    post {
+                        always {
+                            junit 'test-results/junit.xml'
+                            publishHTML(target: [
+                                reportDir: 'test-results',
+                                reportFiles: 'index.html',
+                                reportName: 'Playwright E2E Test Report',
+                                allowMissing: false,
+                                alwaysLinkToLastBuild: false,
+                                keepAll: false
+                            ])
+                        }
                     }
                 }
-            )
-            
+            }
         }
 
-        stage('Deploy'){
+        stage('Deploy') {
             agent {
                 docker {
                     image 'node:20-alpine'
@@ -90,7 +88,7 @@ pipeline {
                 }
             }
 
-            steps{
+            steps {
                 sh '''
                     npm install netlify-cli
                     node_modules/.bin/netlify --version
@@ -98,6 +96,4 @@ pipeline {
             }
         }
     }
-
-    
 }
